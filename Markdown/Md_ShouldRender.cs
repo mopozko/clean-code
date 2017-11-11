@@ -42,20 +42,6 @@ namespace Markdown
         }
 
         [Test]
-        public void asd()
-        {
-            var input = "asd_asd__a__sd_asd_ASd__a_1_1";
-            var output = "asd<em>asd__a__sd</em>asd_ASd__a_1_1";
-            RenderToHtml_Equality(input, output);
-        }
-        [Test]
-        public void asd1()
-        {
-            var input = "asd__asd_a_sd__asd_ASd__a_1_1";
-            var output = "asd<strong>asd<em>a</em>sd</strong>asd_ASd__a_1_1";
-            RenderToHtml_Equality(input, output);
-        }
-        [Test]
         public void RenderToHtml_EmInstrong()
         {
             var input = "qwer__qwer_qwer_qwer__qwer";

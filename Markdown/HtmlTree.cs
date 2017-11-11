@@ -8,7 +8,7 @@ namespace Markdown
     {
         public HtmlNode RootNode;
 
-        public HtmlTree(IEnumerable<PairedTagToken> tags)
+        public HtmlTree(IEnumerable<MarkupToken> tags)
         {
             RootNode = new HtmlNode();
             foreach (var tag in tags.OrderBy(x => x.StartIndex))

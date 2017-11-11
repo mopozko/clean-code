@@ -8,7 +8,7 @@ namespace Markdown
 {
 	public class Md
     {
-        private readonly Dictionary<string, Func<PairedTagToken, HtmlTagToken>> TagMatching;
+        private readonly Dictionary<string, Func<int,int, MarkupToken>> TagMatching;
 
         private readonly List<ISingliTokenValidator> SingleTokenValidators;
 
@@ -16,85 +16,82 @@ namespace Markdown
         {
             SingleTokenValidators = new List<ISingliTokenValidator>
             {
-                new EscapingUnderscores(),
+                new UnderscoresEscaping(),
                 new UnderscoresInWordWithNumbers(),
                 new WhitespaceAfterUnderscores()
             };
-            TagMatching = new Dictionary<string, Func<PairedTagToken, HtmlTagToken>>
+            TagMatching = new Dictionary<string, Func<int,int, MarkupToken>>
             {
-                {"__",token => new StrongTagToken(token.StartIndex,token.FinishIndex)},
-                {"_",token => new EmTagToken(token.StartIndex,token.FinishIndex)}
+                {"__",(start,finish) => new StrongTagToken(start,finish)},
+                {"_",(start,finish) => new EmTagToken(start,finish)}
             };
         }
 
-        public HtmlTagToken GetHtmlTagTokenByMdTagName(string mdName, PairedTagToken token)
+        public MarkupToken GetHtmlTagTokenByMdTagName(string mdName, int startIndex, int finishIndex)
         {
-            return TagMatching[mdName](token);
+            return TagMatching[mdName](startIndex,finishIndex);
         }
-        
-        private IEnumerable<SingleMdToken> ParseSingleTokens(string input)
+
+        private bool TryParseTagToken(string text, int startIndex, ref SingleMarkupToken token)
+        {
+            foreach (var tagName in TagMatching.Keys)
+            {
+                if(startIndex + tagName.Length > text.Length)
+                    continue;
+
+                if (!text.Substring(startIndex, tagName.Length).Equals(tagName))
+                    continue;
+
+                var tempToken = new SingleMarkupToken(tagName, startIndex);
+                if (!IsValidSingleToken(text, tempToken))
+                    continue;
+
+                token = tempToken;
+                return true;
+            }
+            return false;
+        }
+
+        private IEnumerable<MarkupToken> ParseAllTokens(string text)
         {
             var index = 0;
-            while (index < input.Length)
-            {
-                var find = false;
-                foreach (var tagName in TagMatching.Keys)
-                {
-                    if (index + tagName.Length > input.Length)
-                        continue;
-                    if (!input.Substring(index, tagName.Length).Equals(tagName))
-                        continue;
-                    var token = new SingleMdToken(tagName, index);
-                    if (IsValidSingleToken(input, token))
-                        yield return token;
-                    index += tagName.Length;
-                    find = true;
-                    break;
-                }
-                if (!find) index++;
-            }   
-        }
+            var startTextTokenIndex = 0;
+            var openningTags = new Stack<SingleMarkupToken>();
 
-        private IEnumerable<PairedTagToken> GroopTokensToPairs(IEnumerable<SingleMdToken> tokens)
-        {
-            var openningTags = new Stack<SingleMdToken>();
-            foreach (var token in tokens)
+            while (index < text.Length)
             {
-                if (openningTags.Count == 0)
-                    openningTags.Push(token);
-                else if (openningTags.Peek().TokenName == token.TokenName)
+                SingleMarkupToken token = null;
+                if (TryParseTagToken(text, index, ref token))
                 {
-                    var openingToken = openningTags.Pop();
-                    yield return GetHtmlTagTokenByMdTagName(token.TokenName, new PairedTagToken(openingToken.StartIndex, token.StartIndex));
+                    yield return ParseTextToken(startTextTokenIndex, token.StartIndex, text);
+                    startTextTokenIndex = index + token.TokenName.Length;
+
+                    if (openningTags.Any() && openningTags.Peek().TokenName == token.TokenName)
+                    {
+                        var openingTag = openningTags.Pop();
+                        yield return GetHtmlTagTokenByMdTagName(token.TokenName, openingTag.StartIndex, token.StartIndex);
+                    }
+                    else openningTags.Push(token);
+
+                    index += token.TokenName.Length;
                 }
-                else openningTags.Push(token);
+                else index++;
             }
-            foreach (var singleToken in openningTags)
-                yield return new TextToken(singleToken.TokenName,singleToken.StartIndex);
-        }
 
-        public TextToken ParseTextToken(SingleMdToken startToken, int finishIndex, string text)
+            yield return ParseTextToken(startTextTokenIndex, text.Length, text);
+            //return not closed tokens as text token
+            foreach (var singleToken in openningTags)
+                yield return new TextToken(singleToken.TokenName, singleToken.StartIndex);
+        }
+        
+        public TextToken ParseTextToken(int startIndex, int finishIndex, string text)
         {
-            var startIndex = startToken.StartIndex + startToken.TokenName.Length;
             var lenght = finishIndex - startIndex;
             var content = text.Substring(startIndex, lenght);
-            return new TextToken(content,startIndex);
+            return new TextToken(content.Replace("\\_","_"), startIndex);
         }
 
-        public IEnumerable<TextToken> ParseTextTokens(string text, List<SingleMdToken> tokens)
-        {
-            tokens.Add(new SingleMdToken("",0));
-            tokens.Add(new SingleMdToken("",text.Length));
-            tokens = tokens.OrderBy(x => x.StartIndex).ToList();
-            for (var i = 0; i < tokens.Count - 1; i++)
-            {
-                var startTag = tokens[i];
-                var finishTag = tokens[i + 1];
-                yield return ParseTextToken(startTag, finishTag.StartIndex, text);
-            }
-        }
-
-        private bool IsValidSingleToken(string text,SingleMdToken token)
+        private bool IsValidSingleToken(string text,SingleMarkupToken token)
         {
             return SingleTokenValidators
                 .All(validator => validator.IsValidToken(text, token));
@@ -102,14 +99,8 @@ namespace Markdown
 
         public string RenderToHtml(string markdown)
         {
-            var allTokens = ParseSingleTokens(markdown).ToList();
-            var textTokens = ParseTextTokens(markdown, allTokens)
-                .Select(x => new TextToken(x.Text.Replace("\\_", "_"),x.StartIndex));
-            var groopingTokens = GroopTokensToPairs(allTokens);
-            var allTags = new List<PairedTagToken>();
-            allTags.AddRange(groopingTokens);
-            allTags.AddRange(textTokens);
-            var tree = new HtmlTree(allTags);
+            var allTokens = ParseAllTokens(markdown).ToList();
+            var tree = new HtmlTree(allTokens);
             return tree.Print();
 		}
     }

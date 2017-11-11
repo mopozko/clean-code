@@ -6,7 +6,7 @@ namespace Markdown
 {
     public class HtmlNode
     {
-        public PairedTagToken Value;
+        public MarkupToken Value;
         public HtmlNode Perent;
         public List<HtmlNode> Content;
 
@@ -15,14 +15,14 @@ namespace Markdown
             Content = new List<HtmlNode>();
         }
 
-        public HtmlNode(HtmlNode perent, PairedTagToken value)
+        public HtmlNode(HtmlNode perent, MarkupToken value)
         {
             this.Value = value;
             Content = new List<HtmlNode>();
             this.Perent = perent;
         }
 
-        public void AddNode(PairedTagToken node)
+        public void AddNode(MarkupToken node)
         {
             var perent = Content.FirstOrDefault(x => x.Value.StartIndex < node.StartIndex && x.Value.FinishIndex > node.FinishIndex);
             if (perent == null)
@@ -41,21 +41,27 @@ namespace Markdown
         public void Print(StringBuilder builder)
         {
             var content = Content.OrderBy(x => x.Value.StartIndex);
-            if (Value == null)
-                foreach (var tag in content)
-                    tag.Print(builder);
-            else if (Value is TextToken)
+            switch (Value)
             {
-                var v = (TextToken)Value;
-                builder.Append(v.Text);
-            }
-            else if (Value is HtmlTagToken)
-            {
-                var v = (HtmlTagToken)Value;
-                v.Open(builder);
-                foreach (var tag in content)
-                    tag.Print(builder);
-                v.Close(builder);
+                case null:
+                {
+                    foreach (var tag in content)
+                        tag.Print(builder);
+                    break;
+                }
+                case TextToken value:
+                {
+                    builder.Append(value.Text);
+                    break;
+                }
+                case HtmlTagToken value:
+                {
+                    value.Open(builder);
+                    foreach (var tag in content)
+                        tag.Print(builder);
+                    value.Close(builder);
+                    break;
+                }
             }
         }
     }

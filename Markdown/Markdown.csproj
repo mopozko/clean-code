@@ -54,12 +54,10 @@
     <Compile Include="HtmlTree.cs" />
     <Compile Include="Md.cs" />
     <Compile Include="Md_ShouldRender.cs" />
-    <Compile Include="PairedMdToken.cs" />
-    <Compile Include="PairedTagToken.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="SingleMdToken.cs" />
-    <Compile Include="SingleTagToken.cs" />
+    <Compile Include="SingleMarkupToken.cs" />
     <Compile Include="TextToken.cs" />
+    <Compile Include="Validators.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -2,10 +2,23 @@
 
 namespace Markdown
 {
-    public class HtmlTagToken : PairedTagToken
+    public class MarkupToken
+    {
+        public string Content { get; }
+        public int StartIndex { get; }
+        public int FinishIndex { get; }
+        public MarkupToken(string content, int startIndex, int finishIndex)
+        {
+            this.Content = content;
+            StartIndex = startIndex;
+            FinishIndex = finishIndex;
+        }
+    }
+
+    public class HtmlTagToken : MarkupToken
     {
         public string TagName { get; }
-        public HtmlTagToken(string tagName, int startIndex, int finishIndex) : base(startIndex, finishIndex)
+        public HtmlTagToken(string tagName, int startIndex, int finishIndex) : base(tagName, startIndex, finishIndex)
         {
             this.TagName = tagName;
         }

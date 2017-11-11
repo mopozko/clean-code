@@ -1,10 +1,10 @@
 ﻿namespace Markdown
 {
-    public class TextToken : PairedTagToken
+    public class TextToken : MarkupToken
     {
         public string Text { get; }
 
-        public TextToken(string text, int startIndex) : base(startIndex, startIndex + text.Length - 1)
+        public TextToken(string text, int startIndex) : base(text,startIndex, startIndex + text.Length - 1)
         {
             this.Text = text;
         }

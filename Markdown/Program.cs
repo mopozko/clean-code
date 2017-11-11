@@ -12,12 +12,10 @@ namespace Markdown
 		static void Main(string[] args)
         {
             var md = new Md();
-            var input = "qwer__qwer_qwer_qwer__qwer";
+            var input = "qwer_qwer_qwer";
 
-            for (var i = 0; i < 10000000; i++)
-            {
-                md.RenderToHtml(input);
-            }
+            Console.WriteLine(md.RenderToHtml(input));
+            
         }
 	}
 }
