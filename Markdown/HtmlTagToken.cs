@@ -15,34 +15,47 @@ namespace Markdown
         }
     }
 
-    public class HtmlTagToken : MarkupToken
+    public abstract class TagToken : MarkupToken
     {
-        public string TagName { get; }
-        public HtmlTagToken(string tagName, int startIndex, int finishIndex) : base(tagName, startIndex, finishIndex)
+        protected TagToken(MarkupToken token) 
+            : base(token.Content, token.StartIndex, token.FinishIndex) {}
+        public abstract void Open(StringBuilder builder);
+        public abstract void Close(StringBuilder builder);
+    }
+
+    public class MarkdownTagToken : TagToken
+    {
+        public MarkdownTagToken(MarkupToken token): base(token) { }
+
+        public override void Open(StringBuilder builder)
         {
-            this.TagName = tagName;
+            builder.Append(Content);
         }
 
-        public void Open(StringBuilder builder)
+        public override void Close(StringBuilder builder)
+        {
+            builder.Append(Content);
+        }
+    }
+
+
+    public class HtmlTagToken : TagToken
+    {
+        public string TagName { get; }
+        public HtmlTagToken(MarkupToken token) : base(token)
+        {
+            this.TagName = token.Content;
+        }
+
+        public override  void Open(StringBuilder builder)
         {
             builder.Append($"<{TagName}>");
         }
 
-        public void Close(StringBuilder builder)
+        public override void Close(StringBuilder builder)
         {
             builder.Append($"</{TagName}>");
         }
 
     }
-
-    public class EmTagToken : HtmlTagToken
-    {
-        public EmTagToken(int startIndex, int finishIndex) : base("em", startIndex, finishIndex) { }
-    }
-
-    public class StrongTagToken : HtmlTagToken
-    {
-        public StrongTagToken(int startIndex, int finishIndex) : base("strong", startIndex, finishIndex) { }
-    }
-
 }

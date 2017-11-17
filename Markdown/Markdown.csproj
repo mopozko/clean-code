@@ -49,14 +49,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HtmlNode.cs" />
+    <Compile Include="AhoCorasickTree.cs" />
     <Compile Include="HtmlTagToken.cs" />
-    <Compile Include="HtmlTree.cs" />
+    <Compile Include="ISingleTokenParsingRool.cs" />
+    <Compile Include="MarkdownAsHtmlTreeReader.cs" />
+    <Compile Include="ITokenParser.cs" />
+    <Compile Include="ITreeReader.cs" />
+    <Compile Include="MarkupTree.cs" />
     <Compile Include="Md.cs" />
     <Compile Include="Md_ShouldRender.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="SingleMarkupToken.cs" />
+    <Compile Include="TextHelper.cs" />
     <Compile Include="TextToken.cs" />
+    <Compile Include="MarkdownTokenParser.cs" />
     <Compile Include="Validators.cs" />
   </ItemGroup>
   <ItemGroup>
